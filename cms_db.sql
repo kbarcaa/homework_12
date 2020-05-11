@@ -28,14 +28,14 @@ CREATE TABLE employee (
 );
 
 INSERT INTO department (name) 
-VALUES ("Sales"), ("Finance"), ("HR");
+VALUES ("Sales"), ("Finance"), ("HR"), ("Corporate");
 
 
 INSERT INTO role (title, salary, department_id) 
-VALUES ("Manager", 90000.00, 1), ("Accountant", 80000.00, 2), ("Director", 50000.00, 3);
+VALUES ("Manager", 90000.00, 1), ("Accountant", 80000.00, 2), ("Director", 70000.00, 3), ("Vice_President", 100000.00, 4);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id) 
-VALUES("Michael", "Scott", 1, Null), ("Oscar", "Martinez", 2, 1), ("Toby", "Flenderson", 3, 1);
+VALUES ("Jan", "Levinson", 4, null), ("Michael", "Scott", 1, 1), ("Oscar", "Martinez", 2, 2), ("Kevin", "Malone", 2, 2), ("Angela", "Martin", 2, 2), ("Toby", "Flenderson", 3, 2), ("Kelly", "Kapoor", 3, 2), ("Gabe", "Lewis", 3, 2), ("Dwight", "Schrute", 1, 2), ("Stanley", "Hudson", 1, 2), ("Phyllis", "Lapin", 1, 2);
 
 
 SELECT * FROM department;
