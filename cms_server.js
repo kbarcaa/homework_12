@@ -1,7 +1,7 @@
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
-const chalk = require("chalk")
+const chalk = require("chalk");
 
 const connection = (mysql.createConnection = mysql.createConnection({
   host: "localhost",
@@ -17,7 +17,7 @@ connection.connect((err) => {
 });
 
 start = () => {
-  console.log(chalk.yellow.bold("\n Employee Management System \n"))
+  console.log(chalk.yellow.bold("\n Employee Management System \n"));
   inquirer
     .prompt([
       {
@@ -27,8 +27,10 @@ start = () => {
         choices: [
           "View all employees",
           "View employees by department",
-          "Add new employee","Add new department",
-          chalk.red.bold("EXIT")
+          "Add new employee",
+          "Add new department",
+          "Add new role",
+          chalk.red.bold("EXIT"),
         ],
       },
     ])
@@ -45,8 +47,13 @@ start = () => {
       if (res.mainQuestion === "Add new department") {
         addNewDepartment();
       }
-      if(res.mainQuestion === chalk.red.bold("EXIT")) {
-        console.log(chalk.yellow.bold("\n The application has been terminated \n"))
+      if (res.mainQuestion === "Add new role") {
+        addNewRole();
+      }
+      if (res.mainQuestion === chalk.red.bold("EXIT")) {
+        console.log(
+          chalk.yellow.bold("\n The application has been terminated \n")
+        );
         connection.end();
       }
     });
@@ -198,7 +205,6 @@ addNewEmployee = () => {
             },
           ])
           .then((answer) => {
-            
             let roleID;
             resRole.forEach((role) => {
               if (answer.role === role.title) {
@@ -208,7 +214,10 @@ addNewEmployee = () => {
 
             let managerID;
             results.forEach((employee) => {
-              if ( answer.manager === employee.first_name + " " + employee.last_name) {
+              if (
+                answer.manager ===
+                employee.first_name + " " + employee.last_name
+              ) {
                 managerID = employee.id;
               }
             });
@@ -224,7 +233,9 @@ addNewEmployee = () => {
               (err) => {
                 if (err) throw err;
                 console.log(
-                  chalk.magenta.bold("\n New employee was successfully added into the database.")
+                  chalk.magenta.bold(
+                    "\n New employee was successfully added into the database."
+                  )
                 );
                 start();
               }
@@ -236,22 +247,89 @@ addNewEmployee = () => {
 };
 
 addNewDepartment = () => {
-  inquirer.prompt([
-    {
-      name: "newDeptName",
-      type: "input",
-      message: chalk.green("Enter name of new department:")
-    }
-  ]).then((answer)=>{
-    connection.query("INSERT INTO department SET ?", 
-    {
-      name: answer.newDeptName
-    }, (err)=>{
-      if (err) throw err;
-      console.log(
-        chalk.magenta.bold("\n New department was successfully created.")
+  inquirer
+    .prompt([
+      {
+        name: "newDeptName",
+        type: "input",
+        message: chalk.green("Enter name of new department:"),
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "INSERT INTO department SET ?",
+        {
+          name: answer.newDeptName,
+        },
+        (err) => {
+          if (err) throw err;
+          console.log(
+            chalk.magenta.bold("\n New department was successfully created.")
+          );
+          start();
+        }
       );
-      start();
-    })
-  })
-}
+    });
+};
+
+addNewRole = () => {
+  connection.query(`SELECT * FROM department`, (err, results) => {
+    if (err) throw err;
+
+    let dep = [];
+    results.forEach((department) => {
+      dep.push(department.name);
+    });
+
+    inquirer
+      .prompt([
+        {
+          name: "newRoleName",
+          type: "input",
+          message: chalk.green("Enter name of new role: "),
+        },
+        {
+          name: "newRoleSalary",
+          type: "input",
+          message: chalk.green("Enter the salary for the new role: "),
+          validate: (value) => {
+            if (isNaN(value) === false) {
+              return true;
+            }
+            return false;
+          },
+        },
+        {
+          name: "newRoleDept",
+          type: "rawlist",
+          message: chalk.green("Select department for the new role:"),
+          choices: dep,
+        },
+      ])
+      .then((answer) => {
+
+        let depID;
+        results.forEach((department) => {
+          if (answer.newRoleDept === department.name) {
+            depID = department.id;
+          }
+        });
+
+        connection.query(
+          "INSERT INTO role SET ?",
+          {
+            title: answer.newRoleName,
+            salary: answer.newRoleSalary,
+            department_id: depID,
+          },
+          (err) => {
+            if (err) throw err;
+            console.log(
+              chalk.magenta.bold("\n New role was successfully created.")
+            );
+            start();
+          }
+        );
+      });
+  });
+};
