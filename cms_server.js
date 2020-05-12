@@ -27,7 +27,7 @@ start = () => {
         choices: [
           "View all employees",
           "View employees by department",
-          "Add new employee",
+          "Add new employee","Add new department",
           chalk.red.bold("EXIT")
         ],
       },
@@ -41,6 +41,9 @@ start = () => {
       }
       if (res.mainQuestion === "Add new employee") {
         addNewEmployee();
+      }
+      if (res.mainQuestion === "Add new department") {
+        addNewDepartment();
       }
       if(res.mainQuestion === chalk.red.bold("EXIT")) {
         console.log(chalk.yellow.bold("\n The application has been terminated \n"))
@@ -232,3 +235,23 @@ addNewEmployee = () => {
   });
 };
 
+addNewDepartment = () => {
+  inquirer.prompt([
+    {
+      name: "newDeptName",
+      type: "input",
+      message: chalk.green("Enter name of new department:")
+    }
+  ]).then((answer)=>{
+    connection.query("INSERT INTO department SET ?", 
+    {
+      name: answer.newDeptName
+    }, (err)=>{
+      if (err) throw err;
+      console.log(
+        chalk.magenta.bold("\n New department was successfully created.")
+      );
+      start();
+    })
+  })
+}
