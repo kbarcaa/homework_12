@@ -27,9 +27,10 @@ start = () => {
         choices: [
           "View all employees",
           "View employees by department",
-          "Add new employee",
           "Add new department",
           "Add new role",
+          "Add new employee",
+          "Update employee info",
           chalk.red.bold("EXIT"),
         ],
       },
@@ -41,14 +42,17 @@ start = () => {
       if (res.mainQuestion === "View employees by department") {
         showEmployeeByDepartment();
       }
-      if (res.mainQuestion === "Add new employee") {
-        addNewEmployee();
-      }
       if (res.mainQuestion === "Add new department") {
         addNewDepartment();
       }
       if (res.mainQuestion === "Add new role") {
         addNewRole();
+      }
+      if (res.mainQuestion === "Add new employee") {
+        addNewEmployee();
+      }
+      if (res.mainQuestion === "Update employee info") {
+        updateEmployee();
       }
       if (res.mainQuestion === chalk.red.bold("EXIT")) {
         console.log(
@@ -153,6 +157,93 @@ showEmployeeByDepartment = () => {
   });
 };
 
+addNewDepartment = () => {
+  inquirer
+    .prompt([
+      {
+        name: "newDeptName",
+        type: "input",
+        message: chalk.green("Enter name of new department:"),
+      },
+    ])
+    .then((answer) => {
+      connection.query(
+        "INSERT INTO department SET ?",
+        {
+          name: answer.newDeptName,
+        },
+        (err) => {
+          if (err) throw err;
+          console.log(
+            chalk.magenta.bold("\n New department was successfully created.")
+          );
+          start();
+        }
+      );
+    });
+};
+
+addNewRole = () => {
+  connection.query(`SELECT * FROM department`, (err, results) => {
+    if (err) throw err;
+
+    let dep = [];
+    results.forEach((department) => {
+      dep.push(department.name);
+    });
+
+    inquirer
+      .prompt([
+        {
+          name: "newRoleName",
+          type: "input",
+          message: chalk.green("Enter name of new role: "),
+        },
+        {
+          name: "newRoleSalary",
+          type: "input",
+          message: chalk.green("Enter the salary for the new role: "),
+          validate: (value) => {
+            if (isNaN(value) === false) {
+              return true;
+            }
+            return false;
+          },
+        },
+        {
+          name: "newRoleDept",
+          type: "rawlist",
+          message: chalk.green("Select department for the new role:"),
+          choices: dep,
+        },
+      ])
+      .then((answer) => {
+        let depID;
+        results.forEach((department) => {
+          if (answer.newRoleDept === department.name) {
+            depID = department.id;
+          }
+        });
+
+        connection.query(
+          "INSERT INTO role SET ?",
+          {
+            title: answer.newRoleName,
+            salary: answer.newRoleSalary,
+            department_id: depID,
+          },
+          (err) => {
+            if (err) throw err;
+            console.log(
+              chalk.magenta.bold("\n New role was successfully created.")
+            );
+            start();
+          }
+        );
+      });
+  });
+};
+
 addNewEmployee = () => {
   let rol = [];
   let manager = [];
@@ -246,90 +337,74 @@ addNewEmployee = () => {
   });
 };
 
-addNewDepartment = () => {
-  inquirer
-    .prompt([
-      {
-        name: "newDeptName",
-        type: "input",
-        message: chalk.green("Enter name of new department:"),
-      },
-    ])
-    .then((answer) => {
-      connection.query(
-        "INSERT INTO department SET ?",
-        {
-          name: answer.newDeptName,
-        },
-        (err) => {
-          if (err) throw err;
-          console.log(
-            chalk.magenta.bold("\n New department was successfully created.")
-          );
-          start();
-        }
-      );
-    });
-};
+updateEmployee = () => {
+  let emp = [];
+  let rol = [];
 
-addNewRole = () => {
-  connection.query(`SELECT * FROM department`, (err, results) => {
+  connection.query(`SELECT * FROM employee`, (err, results) => {
     if (err) throw err;
 
-    let dep = [];
-    results.forEach((department) => {
-      dep.push(department.name);
+    results.forEach((employee) => {
+      emp.push(employee.first_name + " " + employee.last_name);
     });
 
-    inquirer
-      .prompt([
-        {
-          name: "newRoleName",
-          type: "input",
-          message: chalk.green("Enter name of new role: "),
-        },
-        {
-          name: "newRoleSalary",
-          type: "input",
-          message: chalk.green("Enter the salary for the new role: "),
-          validate: (value) => {
-            if (isNaN(value) === false) {
-              return true;
-            }
-            return false;
-          },
-        },
-        {
-          name: "newRoleDept",
-          type: "rawlist",
-          message: chalk.green("Select department for the new role:"),
-          choices: dep,
-        },
-      ])
-      .then((answer) => {
+    connection.query(`SELECT * FROM role`, (err, resRole) => {
+      if (err) throw err;
 
-        let depID;
-        results.forEach((department) => {
-          if (answer.newRoleDept === department.name) {
-            depID = department.id;
-          }
-        });
-
-        connection.query(
-          "INSERT INTO role SET ?",
-          {
-            title: answer.newRoleName,
-            salary: answer.newRoleSalary,
-            department_id: depID,
-          },
-          (err) => {
-            if (err) throw err;
-            console.log(
-              chalk.magenta.bold("\n New role was successfully created.")
-            );
-            start();
-          }
-        );
+      resRole.forEach((role) => {
+        rol.push(role.title);
       });
+
+      inquirer
+        .prompt([
+          {
+            name: "chooseEmp",
+            type: "rawlist",
+            choices: emp,
+            message: "Choose an employee to update",
+          },
+          {
+            name: "newRole",
+            type: "rawlist",
+            choices: rol,
+            message: "Choose a new role",
+          },
+        ])
+        .then((answer) => {
+          let roleID;
+          resRole.forEach((role) => {
+            if (answer.newRole === role.title) {
+              roleID = role.id;
+            }
+          });
+
+          let empID;
+          results.forEach((employee) => {
+            if (
+              answer.chooseEmp ===
+              employee.first_name + " " + employee.last_name
+            ) {
+              empID = employee.id;
+            }
+          });
+
+          connection.query(
+            "UPDATE employee SET ? WHERE ?",
+            [
+              {
+                role_id: roleID,
+              },
+              {
+                id: empID,
+              },
+            ],
+            (error) => {
+              if (error) throw err;
+              console.log(chalk.green.bold("\n Employee has been updated"));
+              start();
+            }
+          );
+        });
+    });
   });
 };
