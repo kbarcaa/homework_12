@@ -90,69 +90,34 @@ showEmployeeByDepartment = () => {
     inquirer
       .prompt([
         {
-          name: "departmentName",
+          name: "choice",
           type: "rawlist",
           message: chalk.green("Please select one"),
           choices: dep,
         },
       ])
-      .then((response) => {
-        if (response.departmentName === "Sales") {
-          connection.query(
-            `SELECT emp.id, emp.first_name, emp.last_name, title Job_Title, name Department, salary Salary 
-            FROM employee AS emp
-            INNER JOIN role ON emp.role_id = role.id
-            INNER JOIN department ON department_id = department.id
-            WHERE department.name = "Sales"`,
-            function (err, res) {
-              if (err) throw err;
-              console.table(res);
-              start();
-            }
-          );
+      .then((answer) => {
+        var chosenItem;
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].name === answer.choice) {
+            chosenItem = results[i];
+          }
         }
-        if (response.departmentName === "Finance") {
-          connection.query(
-            `SELECT emp.id, emp.first_name, emp.last_name, title Job_Title, name Department, salary Salary 
-            FROM employee AS emp
-            INNER JOIN role ON emp.role_id = role.id
-            INNER JOIN department ON department_id = department.id
-            WHERE department.name = "Finance"`,
-            function (err, res) {
-              if (err) throw err;
-              console.table(res);
-              start();
-            }
-          );
-        }
-        if (response.departmentName === "HR") {
-          connection.query(
-            `SELECT emp.id, emp.first_name, emp.last_name, title Job_Title, name Department, salary Salary 
-            FROM employee AS emp
-            INNER JOIN role ON emp.role_id = role.id
-            INNER JOIN department ON department_id = department.id
-            WHERE department.name = "HR"`,
-            function (err, res) {
-              if (err) throw err;
-              console.table(res);
-              start();
-            }
-          );
-        }
-        if (response.departmentName === "Corporate") {
-          connection.query(
-            `SELECT emp.id, emp.first_name, emp.last_name, title Job_Title, name Department, salary Salary 
-            FROM employee AS emp
-            INNER JOIN role ON emp.role_id = role.id
-            INNER JOIN department ON department_id = department.id
-            WHERE department.name = "Corporate"`,
-            function (err, res) {
-              if (err) throw err;
-              console.table(res);
-              start();
-            }
-          );
-        }
+        // console.log(chosenItem)
+        connection.query(
+          `SELECT emp.id, emp.first_name, emp.last_name, title
+          Job_Title, name Department, salary Salary 
+          FROM employee AS emp
+          INNER JOIN role ON emp.role_id = role.id
+          INNER JOIN department ON department_id = department.id
+          WHERE department.name = "${chosenItem.name}"`,
+          function (err, res) {
+            if (err) throw err;
+            console.log(chosenItem.name);
+            console.table(res);
+            start();
+          }
+        );
       });
   });
 };
